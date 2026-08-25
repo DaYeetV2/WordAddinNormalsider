@@ -10,3 +10,5 @@ Standardvisningen viser kun normalsidetallet. Under indstillinger kan
 
 Fodnoter, slutnoter, sidehoveder og sidefødder er ikke en del af dokumentets
 body og medregnes derfor ikke.
+
+https://dayeetv2.github.io/WordAddinNormalsider/taskpane.html
