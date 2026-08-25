@@ -1,8 +1,8 @@
 # Normalsider til Microsoft Word
 
-Tilføjer normalsideberegning så man ikke behøver at sidde med lommeregner imens man skriver opgaver.
+Tilføjer normalsideberegning så man ikke behøver at sidde med lommeregner, imens man skriver opgaver.
 
-Installation er ikke så lige til.
+Installation er lidt kompliceret, så her er en step-by-step guide.
 
 1. download manifest.xml
 
