@@ -23,12 +23,20 @@ body{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;color:#2
   <div class="label">normalsider</div>
 
   <section class="settings">
-    <label>
-      <input type="checkbox" id="includeTextBoxes">
-      <span>Medtag tekstfelter</span>
-    </label>
-    <div class="details">2.400 tegn inkl. mellemrum pr. normalside</div>
-  </section>
+  <label>
+    <input type="checkbox" id="includeTextBoxes">
+    <span>Medtag tekstfelter</span>
+  </label>
+
+  <label style="margin-top:10px;">
+    <input type="checkbox" id="precisionMode">
+    <span>Præcisionstilstand</span>
+  </label>
+
+  <div class="details">
+    2.400 tegn inkl. mellemrum pr. normalside
+  </div>
+</section>
 
   <div class="status" id="status"></div>
 </main>
@@ -37,6 +45,7 @@ body{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;color:#2
 const PAGE_SIZE=2400;
 let updating=false;
 let includeTextBoxes=false;
+let precisionMode=false;
 
 Office.onReady(async info=>{
   if(info.host!==Office.HostType.Word){showError("Denne tilføjelse er lavet til Word.");return;}
@@ -44,9 +53,20 @@ Office.onReady(async info=>{
   const saved=localStorage.getItem("normalsider.includeTextBoxes");
   includeTextBoxes=saved==="true";
   document.getElementById("includeTextBoxes").checked=includeTextBoxes;
+
+  const savedPrecision=localStorage.getItem("normalsider.precisionMode");
+  precisionMode=savedPrecision==="true";
+  document.getElementById("precisionMode").checked=precisionMode;
+  
   document.getElementById("includeTextBoxes").addEventListener("change",e=>{
     includeTextBoxes=e.target.checked;
     localStorage.setItem("normalsider.includeTextBoxes",String(includeTextBoxes));
+    updateCount();
+  });
+
+  document.getElementById("precisionMode").addEventListener("change",e=>{
+    precisionMode=e.target.checked;
+    localStorage.setItem("normalsider.precisionMode",String(precisionMode));
     updateCount();
   });
   await updateCount();
@@ -86,10 +106,10 @@ async function updateCount(){
 
       const pages=characters/PAGE_SIZE;
 
-      document.getElementById("pages").textContent =
+      document.getElementById("pages").textContent=
         pages.toLocaleString("da-DK",{
-          minimumFractionDigits:1,
-          maximumFractionDigits:1
+          minimumFractionDigits: precisionMode ? 4 : 1,
+          maximumFractionDigits: precisionMode ? 4 : 1
         });
 
       document.getElementById("status").textContent="";
