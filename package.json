@@ -1,0 +1,1 @@
+{"name":"normalsider-word-addin","version":"1.0.0","private":true,"scripts":{"start":"http-server -S -C localhost.crt -K localhost.key --cors . -p 3000"}}

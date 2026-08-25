@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Normalsider</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<style>
+html,body{margin:0;padding:0;background:#fff}
+body{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;color:#242424;min-width:180px}
+.wrap{min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;padding:28px 12px 12px}
+.value{font-size:38px;line-height:1;font-weight:600;letter-spacing:-1px}
+.label{margin-top:8px;font-size:14px;color:#666}
+.settings{width:100%;margin-top:30px;padding-top:14px;border-top:1px solid #eee;font-size:12px;color:#555}
+.settings label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.details{margin-top:8px;font-size:10px;color:#888;line-height:1.4}
+.status{margin-top:12px;font-size:10px;color:#a33;text-align:center}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="value" id="pages">0,0</div>
+  <div class="label">normalsider</div>
+
+  <section class="settings">
+    <label>
+      <input type="checkbox" id="includeTextBoxes">
+      <span>Medtag tekstfelter</span>
+    </label>
+    <div class="details">2.400 tegn inkl. mellemrum pr. normalside</div>
+  </section>
+
+  <div class="status" id="status"></div>
+</main>
+
+<script>
+const PAGE_SIZE=2400;
+let updating=false;
+let includeTextBoxes=false;
+
+Office.onReady(async info=>{
+  if(info.host!==Office.HostType.Word){showError("Denne tilføjelse er lavet til Word.");return;}
+  try{ if(Office.extensionLifeCycle && Office.extensionLifeCycle.taskpane) Office.extensionLifeCycle.taskpane.setWidth(86); }catch(e){}
+  const saved=localStorage.getItem("normalsider.includeTextBoxes");
+  includeTextBoxes=saved==="true";
+  document.getElementById("includeTextBoxes").checked=includeTextBoxes;
+  document.getElementById("includeTextBoxes").addEventListener("change",e=>{
+    includeTextBoxes=e.target.checked;
+    localStorage.setItem("normalsider.includeTextBoxes",String(includeTextBoxes));
+    updateCount();
+  });
+  await updateCount();
+  setInterval(updateCount,1000);
+});
+
+async function updateCount(){
+  if(updating)return;
+  updating=true;
+
+  try{
+    await Word.run(async context=>{
+      const body=context.document.body;
+
+      body.load("text");
+      await context.sync();
+
+      let characters=(body.text||"").length;
+
+      if(includeTextBoxes){
+        const shapes=body.shapes
+          .getByTypes([Word.ShapeType.textBox]);
+
+        shapes.load("items");
+        await context.sync();
+
+        for(const shape of shapes.items){
+          shape.load("body/text");
+        }
+
+        await context.sync();
+
+        for(const shape of shapes.items){
+          characters += (shape.body.text||"").length;
+        }
+      }
+
+      const pages=characters/PAGE_SIZE;
+
+      document.getElementById("pages").textContent =
+        pages.toLocaleString("da-DK",{
+          minimumFractionDigits:1,
+          maximumFractionDigits:1
+        });
+
+      document.getElementById("status").textContent="";
+    });
+  }catch(e){
+    showError(e && e.message ? e.message : String(e));
+  }finally{
+    updating=false;
+  }
+}
+function showError(m){document.getElementById("status").textContent=m;}
+</script>
+</body>
+</html>
