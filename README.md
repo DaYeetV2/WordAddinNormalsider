@@ -1,6 +1,6 @@
-# Normalsider for Microsoft Word
+# Normalsider til Microsoft Word
 
-Tilføjer en task pane med normalsideberegning så man ikke behøver at sidde med lommeregner imens man skriver opgaver.
+Tilføjer normalsideberegning så man ikke behøver at sidde med lommeregner imens man skriver opgaver.
 
 Installation er ikke så lige til.
 
