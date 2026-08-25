@@ -10,7 +10,7 @@ Installation er ikke så lige til.
 
 3. højreklik på mappen og tryk på egenskaber (eller properties)
 
-4. gå ind under Deling (eller Sharing) og find Netværkssti (eller Network Path) (f.eks. "\\YOURCOMPUTERSNAME\Users\YOURUSER\..." osv.) og kopier den
+4. gå ind under Deling (eller Sharing) og find Netværkssti (eller Network Path) (f.eks. "\\\YOURCOMPUTERSNAME\Users\YOURUSER\..." osv.) og kopier den
 
 5. Åben word og tryk på indstillinger nede i venstre hjørne, tryk på "Center for sikkerhed og rettighedsadministration" og tryk på "Indstillinger for Center for sikkerhed og rettighedsadministration"
 
