@@ -10,7 +10,7 @@
 <IconUrl DefaultValue="https://dayeetv2.github.io/WordAddinNormalsider/icon-32.png"/>
 <HighResolutionIconUrl DefaultValue="https://dayeetv2.github.io/WordAddinNormalsider/icon-80.png"/>
 <SupportUrl DefaultValue="https://dayeetv2.github.io/WordAddinNormalsider/taskpane.html"/>
-<AppDomains><AppDomain>https://dayeetv2.github.io/WordAddinNormalsider</AppDomain></AppDomains>
+<AppDomains><AppDomain>https://dayeetv2.github.io</AppDomain></AppDomains>
 <Hosts><Host Name="Document"/></Hosts>
 <Requirements><Sets><Set Name="WordApi" MinVersion="1.1"/></Sets></Requirements>
 <DefaultSettings><SourceLocation DefaultValue="https://dayeetv2.github.io/WordAddinNormalsider/taskpane.html"/></DefaultSettings>
