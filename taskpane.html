@@ -109,7 +109,7 @@ async function updateCount(){
       for(const range of ranges)text+=range.text||'';
       const count=Array.from(text).length;
       el('characters').textContent=count.toLocaleString('da-DK');
-      el('normalsider').textContent=(count/PAGE_SIZE).toLocaleString('da-DK',{minimumFractionDigits:2,maximumFractionDigits:2});
+      el('normalsider').textContent=(count/PAGE_SIZE).toLocaleString('da-DK',{minimumFractionDigits:4,maximumFractionDigits:4});
       el('status').textContent=to>total?'Viser side '+from+'–'+last+' af '+total+'.':'Viser side '+from+'–'+last+' af '+total+'.';
       if(Number(el('toPage').value)>total)el('toPage').value=String(total);
     });
