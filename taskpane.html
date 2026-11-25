@@ -1,126 +1,121 @@
 <!doctype html>
 <html lang="da">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Normalsider</title>
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 <style>
-html,body{margin:0;padding:0;background:#fff}
-body{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;color:#242424;min-width:180px}
-.wrap{min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;padding:28px 12px 12px}
-.value{font-size:38px;line-height:1;font-weight:600;letter-spacing:-1px}
-.label{margin-top:8px;font-size:14px;color:#666}
-.settings{width:100%;margin-top:30px;padding-top:14px;border-top:1px solid #eee;font-size:12px;color:#555}
-.settings label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
-.details{margin-top:8px;font-size:10px;color:#888;line-height:1.4}
-.status{margin-top:12px;font-size:10px;color:#a33;text-align:center}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#242424;font-family:"Segoe UI",Arial,sans-serif}
+main{padding:22px 14px 16px;min-width:190px}
+.number{text-align:center;font-size:36px;line-height:1.05;font-weight:600;letter-spacing:-1px}
+.label{text-align:center;margin-top:5px;color:#666;font-size:13px}
+.characters{text-align:center;margin-top:18px;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.characters-label{text-align:center;color:#666;font-size:12px;margin-top:3px}
+hr{border:0;border-top:1px solid #e6e6e6;margin:22px 0 16px}
+.heading{font-size:12px;font-weight:600;margin-bottom:10px}
+.range{display:flex;gap:10px;align-items:end}
+.field{flex:1;min-width:0}.field label{display:block;color:#555;font-size:11px;margin-bottom:5px}
+input[type=number]{width:100%;height:32px;border:1px solid #c8c8c8;border-radius:4px;padding:4px 7px;font:14px "Segoe UI",Arial}
+button{margin-top:10px;width:100%;height:32px;border:1px solid #c8c8c8;border-radius:4px;background:#f7f7f7;color:#242424;font:12px "Segoe UI",Arial;cursor:pointer}
+button:hover{background:#eee}.hint{font-size:10px;color:#777;line-height:1.4;margin-top:9px}.status{font-size:11px;color:#a4262c;line-height:1.4;margin-top:10px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
-<main class="wrap">
-  <div class="value" id="pages">0,0</div>
+<main>
+  <div class="number" id="normalsider">0,00</div>
   <div class="label">normalsider</div>
-
-  <section class="settings">
-  <label>
-    <input type="checkbox" id="includeTextBoxes">
-    <span>Medtag tekstfelter</span>
-  </label>
-
-  <label style="margin-top:10px;">
-    <input type="checkbox" id="precisionMode">
-    <span>Præcisionstilstand</span>
-  </label>
-
-  <div class="details">
-    2.400 tegn inkl. mellemrum pr. normalside
+  <div class="characters" id="characters">0</div>
+  <div class="characters-label">tegn inkl. mellemrum</div>
+  <hr>
+  <div class="heading">Vælg sider</div>
+  <div class="range">
+    <div class="field"><label for="fromPage">Fra side</label><input id="fromPage" type="number" min="1" step="1" value="1"></div>
+    <div class="field"><label for="toPage">Til side</label><input id="toPage" type="number" min="1" step="1" value="1"></div>
   </div>
-</section>
-
-  <div class="status" id="status"></div>
+  <button id="wholeDocument" type="button">Hele dokumentet</button>
+  <div class="hint">2.400 tegn inkl. mellemrum pr. normalside</div>
+  <div class="status" id="status" role="status"></div>
 </main>
-
 <script>
 const PAGE_SIZE=2400;
-let updating=false;
-let includeTextBoxes=false;
-let precisionMode=false;
-
+let busy=false;
+let refreshTimer=null;
+const el=id=>document.getElementById(id);
 Office.onReady(async info=>{
-  if(info.host!==Office.HostType.Word){showError("Denne tilføjelse er lavet til Word.");return;}
-  try{ if(Office.extensionLifeCycle && Office.extensionLifeCycle.taskpane) Office.extensionLifeCycle.taskpane.setWidth(86); }catch(e){}
-  const saved=localStorage.getItem("normalsider.includeTextBoxes");
-  includeTextBoxes=saved==="true";
-  document.getElementById("includeTextBoxes").checked=includeTextBoxes;
-
-  const savedPrecision=localStorage.getItem("normalsider.precisionMode");
-  precisionMode=savedPrecision==="true";
-  document.getElementById("precisionMode").checked=precisionMode;
-  
-  document.getElementById("includeTextBoxes").addEventListener("change",e=>{
-    includeTextBoxes=e.target.checked;
-    localStorage.setItem("normalsider.includeTextBoxes",String(includeTextBoxes));
-    updateCount();
-  });
-
-  document.getElementById("precisionMode").addEventListener("change",e=>{
-    precisionMode=e.target.checked;
-    localStorage.setItem("normalsider.precisionMode",String(precisionMode));
-    updateCount();
+  if(info.host!==Office.HostType.Word){showError('Denne tilføjelse virker kun i Microsoft Word.');return;}
+  if(!Office.context.requirements.isSetSupported('WordApiDesktop','1.2')){
+    showError('Sideinterval kræver Word til Windows eller Mac med understøttelse af WordApiDesktop 1.2.');return;
+  }
+  const savedFrom=Number(localStorage.getItem('normalsider.fromPage'));
+  const savedTo=Number(localStorage.getItem('normalsider.toPage'));
+  if(savedFrom>0)el('fromPage').value=String(savedFrom);
+  if(savedTo>0)el('toPage').value=String(savedTo);
+  else el('toPage').value=String(await getPageCount().catch(()=>1));
+  el('fromPage').addEventListener('change',saveAndUpdate);
+  el('toPage').addEventListener('change',saveAndUpdate);
+  el('wholeDocument').addEventListener('click',async()=>{
+    el('fromPage').value='1';
+    el('toPage').value=String(await getPageCount().catch(()=>1));
+    saveAndUpdate();
   });
   await updateCount();
-  setInterval(updateCount,1000);
+  refreshTimer=setInterval(updateCount,2000);
 });
-
+function saveAndUpdate(){
+  localStorage.setItem('normalsider.fromPage',el('fromPage').value);
+  localStorage.setItem('normalsider.toPage',el('toPage').value);
+  updateCount();
+}
+async function getPageCount(){
+  let count=1;
+  await Word.run(async context=>{
+    const pages=context.document.activeWindow.activePane.pages;
+    pages.load('items');
+    await context.sync();
+    count=pages.items.length||1;
+  });
+  return count;
+}
 async function updateCount(){
-  if(updating)return;
-  updating=true;
-
+  if(busy)return;
+  busy=true;
   try{
     await Word.run(async context=>{
-      const body=context.document.body;
-
-      body.load("text");
+      const pages=context.document.activeWindow.activePane.pages;
+      pages.load('items');
       await context.sync();
-
-      let characters=(body.text||"").length;
-
-      if(includeTextBoxes){
-        const shapes=body.shapes
-          .getByTypes([Word.ShapeType.textBox]);
-
-        shapes.load("items");
-        await context.sync();
-
-        for(const shape of shapes.items){
-          shape.load("body/text");
-        }
-
-        await context.sync();
-
-        for(const shape of shapes.items){
-          characters += (shape.body.text||"").length;
+      const total=pages.items.length;
+      if(!total){showError('Word kunne ikke finde dokumentets sider.');return;}
+      const from=Math.max(1,Math.floor(Number(el('fromPage').value)||1));
+      const to=Math.max(1,Math.floor(Number(el('toPage').value)||total));
+      if(from>to){showError('“Fra side” skal være mindre end eller lig med “Til side”.');return;}
+      if(from>total){showError('Dokumentet har kun '+total+' sider.');return;}
+      const last=Math.min(to,total);
+      const ranges=[];
+      for(let i=0;i<pages.items.length;i++){
+        const page=pages.items[i];
+        page.load('index');
+      }
+      await context.sync();
+      for(const page of pages.items){
+        if(page.index>=from && page.index<=last){
+          const range=page.getRange(Word.RangeLocation.whole);
+          range.load('text');
+          ranges.push(range);
         }
       }
-
-      const pages=characters/PAGE_SIZE;
-
-      document.getElementById("pages").textContent=
-        pages.toLocaleString("da-DK",{
-          minimumFractionDigits: precisionMode ? 4 : 1,
-          maximumFractionDigits: precisionMode ? 4 : 1
-        });
-
-      document.getElementById("status").textContent="";
+      await context.sync();
+      let text='';
+      for(const range of ranges)text+=range.text||'';
+      const count=Array.from(text).length;
+      el('characters').textContent=count.toLocaleString('da-DK');
+      el('normalsider').textContent=(count/PAGE_SIZE).toLocaleString('da-DK',{minimumFractionDigits:2,maximumFractionDigits:2});
+      el('status').textContent=to>total?'Viser side '+from+'–'+last+' af '+total+'.':'Viser side '+from+'–'+last+' af '+total+'.';
+      if(Number(el('toPage').value)>total)el('toPage').value=String(total);
     });
-  }catch(e){
-    showError(e && e.message ? e.message : String(e));
-  }finally{
-    updating=false;
-  }
+  }catch(error){showError(error&&error.message?error.message:String(error));}
+  finally{busy=false;}
 }
-function showError(m){document.getElementById("status").textContent=m;}
+function showError(message){el('status').textContent=message;}
 </script>
-</body>
-</html>
+</body></html>
